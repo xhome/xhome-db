@@ -7,141 +7,94 @@ import java.util.Map;
 
 /**
  * @project xhome-db
- * @author jhat
- * @email cpf624@126.com
- * @date Aug 13, 201311:19:16 PM
- * @description 
+ * @author 	jhat
+ * @email 	cpf624@126.com
+ * @date 	Dec 29, 20139:35:04 PM
+ * @describe 
  */
 @SuppressWarnings("rawtypes")
 public class QueryBase implements Serializable {
 	
 	private static final long	serialVersionUID	= -5879637756379888847L;
 	
-	private final static long	defaultFirstRow		= 0L;
-	private final static long	defaultTotalRow		= 0L;
-	private final static long	firstPage			= 1L;
-	private final static long	defaultPageSize		= 20L;
-	private final static long	defaultTotalPage	= 0L;
+	protected long					start		= 0;  // 查询开始行
+	protected long					limit		= 20; // 分页限制
+	protected long					total		= 0L; // 总行数
+	protected long					page		= 1;  // 当前页
+	protected long					totalPage	= 0;  // 总页数
 	
-	private long				firstRow			= defaultFirstRow;
-	private long				maxRow				= defaultPageSize;
-	private long				totalRow			= defaultTotalRow;
+	protected Map<String, Object>	parameters	= new HashMap<String, Object>(); // 查询参数
+	protected List					results; // 查询结果
 	
-	private long				currentPage			= firstPage;
-	private long				pageSize			= defaultPageSize;
-	private long				totalPage			= defaultTotalPage;
+	public void setStart(long start) {
+		if (start >= 0) {
+			this.start = start;
+			this.page = 1 + (long) (start / this.limit);
+		}
+	}
 	
-	private Map<String, Object>	parameters			= new HashMap<String, Object>();
-	private List				results;
+	public long getStart() {
+		return start;
+	}
+	
+	public void setLimit(long limit) {
+		if (limit > 0) {
+			this.limit = limit;
+			this.setPage(this.page);
+		}
+	}
+	
+	public long getLimit() {
+		return limit;
+	}
+	
+	public void setTotal(long total) {
+		if (total > 0 && total != this.total) {
+			this.total = total;
+			this.totalPage = total / this.limit;
+			if (total % this.limit != 0) this.totalPage++;
+		}
+	}
+	
+	public long getTotal() {
+		return total;
+	}
+	
+	public void setPage(long page) {
+		if (page > 0) {
+			this.page = page;
+			this.start = (page - 1) * this.limit;
+		}
+	}
+	
+	public long getPage() {
+		return page;
+	}
 	
 	public boolean isFirstPage() {
-		return this.currentPage == firstPage;
+		return this.page == 1;
 	}
 	
 	public boolean isLastPage() {
-		return this.currentPage == this.totalPage;
-	}
-	
-	public boolean nextPage() {
-		if (this.totalRow == defaultTotalRow
-				|| this.currentPage == this.totalPage) return false;
-		this.setCurrentPage(this.getNextPage());
-		return true;
-	}
-	
-	public boolean previousPage() {
-		if (this.totalRow == defaultTotalRow || this.currentPage == firstPage) return false;
-		this.setCurrentPage(this.getPreviousPage());
-		return true;
+		return this.page == this.totalPage;
 	}
 	
 	public long getNextPage() {
-		long next = this.currentPage + 1;
-		return next > this.totalPage ? this.totalPage : next;
+		if (this.page < this.totalPage) {
+			this.setPage(this.page + 1);
+		}
+		return this.page;
 	}
 	
 	public long getPreviousPage() {
-		long previous = this.currentPage - 1;
-		return previous < firstPage ? firstPage : previous;
-	}
-	
-	public void setTotalRow(long totalRow) {
-		if (totalRow > 0 && totalRow != this.totalRow) {
-			this.totalRow = totalRow;
-			this.totalPage = totalRow / this.pageSize;
-			if (totalRow % this.pageSize != 0) this.totalPage++;
+		if (this.page > 1) {
+			this.setPage(this.page - 1);
 		}
-	}
-	
-	public void setTotalRow() {
-		this.setTotalRow(defaultTotalRow);
-	}
-	
-	public long getTotalRow() {
-		return totalRow;
-	}
-	
-	public void setCurrentPage(long currentPage) {
-		if (currentPage > 0) {
-			this.currentPage = currentPage;
-			this.firstRow = (currentPage - 1) * this.pageSize;
-		}
-	}
-	
-	public void setCurrentPage() {
-		this.currentPage = firstPage;
-		this.firstRow = (this.currentPage - 1) * this.pageSize;
-	}
-	
-	public long getCurrentPage() {
-		return currentPage;
-	}
-	
-	public void setPageSize(long pageSize) {
-		if (pageSize > 0) {
-			this.pageSize = pageSize;
-			this.maxRow = pageSize;
-			this.setCurrentPage(this.currentPage);
-		}
-	}
-	
-	public void setPageSize() {
-		this.pageSize = defaultPageSize;
-		this.maxRow = defaultPageSize;
-	}
-	
-	public long getPageSize() {
-		return pageSize;
-	}
-	
-	public long getDefaultPageSize() {
-		return defaultPageSize;
+		return this.page;
 	}
 	
 	public long getTotalPage() {
 		return totalPage;
-	}
-	
-	public void setFirstRow(long firstRow) {
-		if (firstRow >= 0) {
-			this.firstRow = firstRow;
-			this.currentPage = 1 + (long) (firstRow / this.pageSize);
-		}
-	}
-	
-	public long getFirstRow() {
-		return firstRow;
-	}
-	
-	public void setMaxRow(long maxRow) {
-		if (maxRow > 0) {
-			this.pageSize = maxRow;
-			this.maxRow = maxRow;
-		}
-	}
-	
-	public long getMaxRow() {
-		return maxRow;
 	}
 	
 	public void setParameters(Map<String, Object> parameters) {
